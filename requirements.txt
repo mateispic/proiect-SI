@@ -1,0 +1,4 @@
+PyMySQL==1.1.1
+SQLAlchemy==2.0.39
+tk==0.1.0
+typing_extensions==4.12.2
