@@ -10,8 +10,6 @@ session = SessionLocal()
 # --------
 # CREATE 
 # --------
-
-
 fisier = Fisier(
     nume="test.txt",
     cale="/home/user/test.txt",
@@ -26,8 +24,6 @@ print("Fisier adaugat cu succes")
 # --------
 # READ
 # --------
-
-session = SessionLocal()
 fisiere = session.query(Fisier).all()
 print("Fisierele din baza de date sunt:")
 for f in fisiere:
@@ -36,8 +32,6 @@ for f in fisiere:
 # --------
 # UPDATE 
 # --------
-
-session = SessionLocal()
 fisier = session.query(Fisier).filter_by(nume="test.txt").first()
 if fisier:
     fisier.marime = 2048
@@ -48,8 +42,6 @@ if fisier:
 # --------
 # DELETE 
 # --------
-
-session = SessionLocal()
 fisier = session.query(Fisier).filter_by(nume="test.txt").first()
 if fisier:
     session.delete(fisier)
