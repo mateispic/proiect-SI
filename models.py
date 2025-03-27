@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, BigInteger, ForeignKey, TIMESTAMP
 from sqlalchemy.orm import declarative_base, relationship
 from database import engine
-import datetime
+from datetime import datetime, timezone
+import pytz
 
 Base = declarative_base()
 
@@ -13,7 +14,7 @@ class Fisier(Base):
     cale = Column(String(500), nullable=False)
     marime = Column(BigInteger, nullable=False)
     format = Column(String(50), nullable=False)
-    data_upload = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    data_upload = Column(TIMESTAMP(timezone=True), default=lambda: datetime.now(pytz.timezone("Europe/Bucharest")))
 
     performante = relationship("Performanta", back_populates="fisier")
 
@@ -63,7 +64,7 @@ class Performanta(Base):
     rezultat_hash = Column(String(256), nullable=True)
     timp_executie = Column(Integer, nullable=False)
     memorie_utilizata = Column(Integer, nullable=False)
-    data_criptare = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    data_criptare = Column(TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     fisier = relationship("Fisier", back_populates="performante")
     algoritm = relationship("AlgoritmCriptare")

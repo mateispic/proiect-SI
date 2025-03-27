@@ -10,7 +10,7 @@ session = SessionLocal()
 # --------
 # CREATE 
 # --------
-def create_file(nume, cale, marime, format):
+def create_file(nume, cale, marime, format):        
     session = SessionLocal()
     file = Fisier(nume=nume, cale=cale, marime=marime, format=format)
     session.add(file)
@@ -111,3 +111,5 @@ def delete_framework(nume):
         print("Framework sters cu succes")
     session.commit()
     session.close()
+    
+
