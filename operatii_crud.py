@@ -26,7 +26,7 @@ def get_all_files():
     files = session.query(Fisier).all()
     print("Fisierele din baza de date sunt:")
     for f in files:
-        print(f.nume, f.format)
+        print(f'{f.nume}.{f.format}')
     session.commit()
     session.close()
 
@@ -49,11 +49,13 @@ def update_file_name(nume, nume_nou):
 # --------
 def delete_file(nume):
     session = SessionLocal()
-    file = session.query(Fisier).filter_by(nume).first()
+    file = session.query(Fisier).filter_by(nume=nume).first()
     if file:
         session.delete(file)
         session.commit()
-        print("Fisier sters cu succes")
+        print(f'Fisierul {nume} a fost sters cu succes')
+    else:
+        print(f'Fisierul {nume} nu a fost gasit.')
     session.commit()
     session.close()
        
