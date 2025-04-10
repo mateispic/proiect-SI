@@ -4,4 +4,4 @@ from operatii_crud import *
 
 # get_all_files()
 
-delete_file("test_3")
+# delete_file("test_3")
