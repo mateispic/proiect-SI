@@ -10,13 +10,14 @@ session = SessionLocal()
 # --------
 # CREATE 
 # --------
-def create_file(nume, cale, marime, format):        
-    session = SessionLocal()
+def create_file(session, nume, cale, marime, format):        
+    #session = SessionLocal()
     file = Fisier(nume=nume, cale=cale, marime=marime, format=format)
     session.add(file)
     session.commit()
-    session.close()
+  #  session.close()
     print("Fisier adaugat cu succes")
+    return file
 
 # --------
 # READ
@@ -72,6 +73,7 @@ def create_framework(nume, versiune):
     session.commit()
     session.close()
     print("Framework adaugat cu succes")
+    
 
 # --------
 # READ
