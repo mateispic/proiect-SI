@@ -28,6 +28,7 @@ def get_all_files():
         print(f'{f.nume}.{f.format}')
     session.commit()
     session.close()
+    
 
 # --------
 # UPDATE 

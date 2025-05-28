@@ -22,6 +22,8 @@ root.title("Criptare Fisiere")
 # Variabile
 # ------------
 selected_file = ""
+ultima_criptare=""
+rezultat_hash = ""
 selected_algoritm = tk.StringVar()
 selected_framework = tk.StringVar()
 
@@ -63,6 +65,9 @@ def select_private_key():
 
 
 def save():
+    global rezultat_hash
+    global ultima_criptare
+
     if not selected_file:
         label_fisier.config(text="Selectează un fișier!")
         return
@@ -90,6 +95,7 @@ def save():
             return
 
         output_file = ""
+        
         pub_key = rsa_public_key_path.get()
         priv_key = rsa_private_key_path.get()
 
@@ -132,28 +138,30 @@ def save():
         t_end = time.time()
         exec_time_ms = int((t_end - t_start) * 1000)
 
-        # Calcul hash pe fisierul rezultat
-        with open(output_file, "rb") as f:
-            rezultat_hash = hashlib.sha256(f.read()).hexdigest()
+        if tip_operatie.get() == "criptare":
+            with open(selected_file, "rb") as f:
+                rezultat_hash = hashlib.sha256(f.read()).hexdigest()
+            print("Rezultatul criptării:", rezultat_hash)
+            ultima_criptare = rezultat_hash
+            print("Ultima criptare:", ultima_criptare)
+        else:
+            ultima_criptare = rezultat_hash
+            with open(output_file, "rb") as f:
+                rezultat_hash = hashlib.sha256(f.read()).hexdigest()
 
-        # Verificare integritate doar la decriptare
+        
         if tip_operatie.get() == "decriptare":
-            ultima_criptare = (
-                session.query(Performanta)
-                .filter_by(id_fisier=fisier.id, id_algoritm=alg.id, id_framework=fw.id, tip_operatie="criptare")
-                .order_by(Performanta.data_criptare.desc())
-                .first()
-            )
-
+            print("ultima_criptare:", ultima_criptare)
+            print("rezultat_hash:", rezultat_hash)
             if ultima_criptare:
-                if ultima_criptare.rezultat_hash == rezultat_hash:
-                    messagebox.showinfo("Integritate", "Fișier decriptat corect ✅")
+                if ultima_criptare== rezultat_hash:
+
+                    messagebox.showinfo("Integritate", "Fișier decriptat corect ")
                 else:
-                    messagebox.showwarning("Integritate", "Fișierul decriptat NU coincide ❌")
+                    messagebox.showwarning("Integritate", "Fișierul decriptat NU coincide")
             else:
                 messagebox.showwarning("Integritate", "Nu s-a găsit un hash de referință pentru comparație.")
 
-        # Salvare performanță
         perf = Performanta(
             id_fisier=fisier.id,
             id_algoritm=alg.id,
