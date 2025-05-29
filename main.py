@@ -319,7 +319,7 @@ def save():
         session.add(perf)
         session.commit()
 
-        messagebox.showinfo("Succes", "Performanya a fost salvata in baza de date.")
+        messagebox.showinfo("Succes", "Performanta a fost salvata in baza de date.")
         print(f"Timp de executie: {exec_time_ms} ms")
 
     except Exception as e:
