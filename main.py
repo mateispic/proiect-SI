@@ -11,6 +11,7 @@ from operatii_crud import *
 from openssl import *
 from libressl import *
 import psutil
+import matplotlib.pyplot as plt
 
 
 
@@ -42,6 +43,44 @@ frameworkuri = ["OpenSSL","LibreSSL"]
 # ------------
 # Functii
 # ------------
+
+def vizualizare_grafice():
+    session = SessionLocal()
+    performante = (
+        session.query(Performanta, AlgoritmCriptare.nume.label("alg_nume"), Framework.nume.label("fw_nume"))
+        .join(AlgoritmCriptare, Performanta.id_algoritm == AlgoritmCriptare.id)
+        .join(Framework, Performanta.id_framework == Framework.id)
+        .all()
+    )
+    session.close()
+
+    combinatii = {}
+    for p, alg_nume, fw_nume in performante:
+        key = f"{fw_nume} + {alg_nume}"
+        if key not in combinatii:
+            combinatii[key] = {"timp": [], "memorie": []}
+        combinatii[key]["timp"].append(p.timp_executie)
+        combinatii[key]["memorie"].append(p.memorie_utilizata)
+
+    categorii = list(combinatii.keys())
+    timpi = [sum(c["timp"]) / len(c["timp"]) for c in combinatii.values()]
+    memorie = [sum(c["memorie"]) / len(c["memorie"]) for c in combinatii.values()]
+
+    plt.figure()
+    plt.bar(categorii, timpi)
+    plt.title("Timp mediu de executie")
+    plt.ylabel("Ms")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+    # plt.figure()
+    # plt.bar(categorii, memorie, color='orange')
+    # plt.title("Memorie medie utilizata")
+    # plt.ylabel("Kb")
+    # plt.xticks(rotation=45)
+    # plt.tight_layout()
+    # plt.show()
 
 def genereaza_chei(session):
     if selected_framework.get() == "OpenSSL":
@@ -365,6 +404,9 @@ tk.Button(root, text="Start", command=save).pack(pady=10)
 # 8. Performanta
 #-----
 tk.Button(root, text="Vezi performante", command=afiseaza_performante).pack(pady=5)
+
+tk.Button(root, text="Vezi grafice performanță", command=vizualizare_grafice).pack(pady=5)
+
 
 
 
