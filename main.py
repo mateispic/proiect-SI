@@ -40,9 +40,23 @@ frameworkuri = ["OpenSSL","LibreSSL"]
 # Functii
 # ------------
 
-def genereaza_chei():
-    generate_rsa_keys()
-    messagebox.showinfo("Chei RSA", "Perechea de chei RSA a fost generată.")
+def genereaza_chei(session):
+    if selected_framework.get() == "OpenSSL":
+        generate_rsa_keys() 
+    else:
+        generate_rsa_keys_libressl() 
+    with open("/Users/admin/Desktop/SI-Proiect/public_key.pem", "r") as f_pub, open("/Users/admin/Desktop/SI-Proiect/private_key.pem", "r") as f_priv:
+        cheie_pub = f_pub.read()
+        cheie_priv = f_priv.read()
+
+    #session = SessionLocal()
+    alg = session.query(AlgoritmCriptare).filter_by(nume="RSA").first()
+    if alg:
+        create_asymmetric_key(cheie_pub, cheie_priv, tip="RSA", id_algoritm=alg.id)
+        messagebox.showinfo("Chei RSA", "Perechea de chei RSA a fost generată și salvată în baza de date.")
+    else:
+        messagebox.showerror("Eroare", "Algoritmul RSA nu există în baza de date.")
+    session.close()
 
 
 def select_file():
@@ -61,18 +75,87 @@ def select_private_key():
     path = filedialog.askopenfilename(filetypes=[("PEM files", "*.pem")])
     if path:
         rsa_private_key_path.set(path)
+        
+def afiseaza_performante():
+    win = tk.Toplevel(root)
+    win.title("Performanțe salvate în DB")
+
+    canvas = tk.Canvas(win)
+    scrollbar = tk.Scrollbar(win, orient="vertical", command=canvas.yview)
+    scroll_frame = tk.Frame(canvas)
+
+    scroll_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(
+            scrollregion=canvas.bbox("all")
+        )
+    )
+
+    canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    canvas.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    headers = ["Fișier", "Algoritm", "Framework", "Tip operație", "Hash", "Timp (ms)", "Data"]
+    for i, h in enumerate(headers):
+        tk.Label(scroll_frame, text=h, font=("Arial", 10, "bold"), borderwidth=1, relief="solid", padx=4, pady=2).grid(row=0, column=i)
+
+    session = SessionLocal()
+    performante = session.query(Performanta).all()
+
+    medii = {}  
+
+    for idx, p in enumerate(performante, start=1):
+        fisier = session.query(Fisier).filter_by(id=p.id_fisier).first()
+        algoritm = session.query(AlgoritmCriptare).filter_by(id=p.id_algoritm).first()
+        framework = session.query(Framework).filter_by(id=p.id_framework).first()
+
+        nume_alg = algoritm.nume if algoritm else "-"
+        nume_fw = framework.nume if framework else "-"
+        cheie = (nume_alg, nume_fw)
+
+        medii.setdefault(cheie, []).append(p.timp_executie)
+
+        valori = [
+            fisier.nume if fisier else "-",
+            nume_alg,
+            nume_fw,
+            p.tip_operatie,
+            p.rezultat_hash[:16] + "..." if len(p.rezultat_hash) > 16 else p.rezultat_hash,
+            f"{p.timp_executie} ms",
+            p.data_criptare.strftime("%Y-%m-%d %H:%M:%S")
+        ]
+        for j, val in enumerate(valori):
+            tk.Label(scroll_frame, text=val, borderwidth=1, relief="solid", padx=4, pady=2).grid(row=idx, column=j)
+
+    tk.Label(scroll_frame, text="").grid(row=idx + 1, column=0)
+
+    tk.Label(scroll_frame, text="Medii timp executie: Algoritm + Framework", font=("Arial", 10, "bold")).grid(row=idx + 2, column=0, columnspan=3)
+
+    row_offset = idx + 3
+    for k, timpi in medii.items():
+        medie = round(sum(timpi) / len(timpi), 2)
+        mesaj = f"{k[0]} + {k[1]}: {medie} ms"
+        tk.Label(scroll_frame, text=mesaj).grid(row=row_offset, column=0, columnspan=3, sticky="w", padx=10)
+        row_offset += 1
+
+    session.close()
 
 
+
+session = SessionLocal()
 
 def save():
     global rezultat_hash
     global ultima_criptare
+    global session
 
     if not selected_file:
         label_fisier.config(text="Selectează un fișier!")
         return
 
-    session = SessionLocal()
+   # session = SessionLocal()
 
     try:
         fisier = session.query(Fisier).filter(Fisier.cale == selected_file).first()
@@ -101,17 +184,22 @@ def save():
 
         t_start = time.time()
 
-        # Criptare sau decriptare
         if selected_framework.get() == "OpenSSL":
             if selected_algoritm.get() == "AES":
                 if tip_operatie.get() == "criptare":
                     output_file = selected_file + ".enc"
+                    create_symmetric_key(
+                        cheie=cheie_var.get(),
+                        tip="AES",
+                        id_algoritm=alg.id
+                    )
                     aes_encrypt(selected_file, output_file, cheie_var.get())
                 else:
                     output_file = selected_file.replace(".enc", ".dec")
                     aes_decrypt(selected_file, output_file, cheie_var.get())
             elif selected_algoritm.get() == "RSA":
                 if tip_operatie.get() == "criptare":
+                    
                     output_file = selected_file + ".rsa.enc"
                     rsa_encrypt(selected_file, output_file, pub_key)
                 else:
@@ -121,6 +209,11 @@ def save():
         elif selected_framework.get() == "LibreSSL":
             if selected_algoritm.get() == "AES":
                 if tip_operatie.get() == "criptare":
+                    create_symmetric_key(
+                        cheie=cheie_var.get(),
+                        tip="AES",
+                        id_algoritm=alg.id
+                    )
                     output_file = selected_file + ".enc"
                     aes_encrypt_libressl(selected_file, output_file, cheie_var.get())
                 else:
@@ -156,11 +249,11 @@ def save():
             if ultima_criptare:
                 if ultima_criptare== rezultat_hash:
 
-                    messagebox.showinfo("Integritate", "Fișier decriptat corect ")
+                    messagebox.showinfo("Integritate", "Fisier decriptat corect ")
                 else:
-                    messagebox.showwarning("Integritate", "Fișierul decriptat NU coincide")
+                    messagebox.showwarning("Integritate", "Fisierul decriptat NU coincide")
             else:
-                messagebox.showwarning("Integritate", "Nu s-a găsit un hash de referință pentru comparație.")
+                messagebox.showwarning("Integritate", "Nu s-a găsit un hash de referinta pentru comparatie.")
 
         perf = Performanta(
             id_fisier=fisier.id,
@@ -245,15 +338,22 @@ def update_cheie_fields(*args):
 selected_algoritm.trace_add("write", update_cheie_fields)
 update_cheie_fields()
 
-tk.Button(root, text="Generează chei RSA", command=genereaza_chei).pack()
+#-----
+# 6. Generare chei RSA
+#-----
+tk.Button(root, text="Genereaza chei RSA", command=lambda: genereaza_chei(session)).pack()
+
 
 
 #-----
-# 6. Start
+# 7. Start
 #-----
 tk.Button(root, text="Start", command=save).pack(pady=10)
 
-
+#-----
+# 8. Performanta
+#-----
+tk.Button(root, text="Vezi performanțe", command=afiseaza_performante).pack(pady=5)
 
 
 

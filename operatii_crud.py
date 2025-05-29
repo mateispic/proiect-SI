@@ -28,7 +28,7 @@ def get_all_files():
         print(f'{f.nume}.{f.format}')
     session.commit()
     session.close()
-    
+
 
 # --------
 # UPDATE 
@@ -180,11 +180,11 @@ def delete_symmetrical_key(cheie):
 # --------
 def create_asymmetric_key(cheie_publica, cheie_privata, tip, id_algoritm):
     session = SessionLocal()
-    asymm_key = CheieSimetrica(cheie_publica=cheie_publica, cheie_privata=cheie_privata, tip=tip, lungime=len(cheie_publica), id_algoritm=id_algoritm)
+    asymm_key = CheieAsimetrica(cheie_publica=cheie_publica, cheie_privata=cheie_privata, tip=tip, lungime=len(cheie_publica), id_algoritm=id_algoritm)
     session.add(asymm_key)
     session.commit()
     session.close()
-    print("Cheie simetrica adaugata cu succes")
+    print("Chei asimetrice adaugate cu succes")
 
 # --------
 # READ

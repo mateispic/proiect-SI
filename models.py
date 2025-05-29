@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, BigInteger, ForeignKey, TIMESTAMP
+from sqlalchemy import Column, Integer, String, BigInteger, ForeignKey, TIMESTAMP, Text
 from sqlalchemy.orm import declarative_base, relationship
 from database import engine
 from datetime import datetime, timezone
@@ -31,8 +31,8 @@ class CheieAsimetrica(Base):
     __tablename__ = "cheie_asimetrica"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    cheie_publica = Column(String(500), nullable=False)
-    cheie_privata = Column(String(500), nullable=False)
+    cheie_publica = Column(Text, nullable=False)
+    cheie_privata = Column(Text, nullable=False)
     tip = Column(String(10), nullable=False)
     lungime = Column(Integer, nullable=False)
     id_algoritm = Column(Integer, ForeignKey("algoritm_criptare.id"), nullable=False)

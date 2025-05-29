@@ -28,10 +28,10 @@ def rsa_decrypt(input_path, output_path, private_key_path):
     except subprocess.CalledProcessError as e:
         print("Eroare la decriptare RSA:", e)
 
-def generate_rsa_keys(private_path="private_key.pem", public_path="public_key.pem"):
+def generate_rsa_keys(private_path="/Users/admin/Desktop/SI-Proiect/private_key.pem", public_path="/Users/admin/Desktop/SI-Proiect/public_key.pem"):
     subprocess.run(["openssl", "genrsa", "-out", private_path, "1024"], check=True)
     subprocess.run(["openssl", "rsa", "-in", private_path, "-pubout", "-out", public_path], check=True)
-
+    
 
 
 

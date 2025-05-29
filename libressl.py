@@ -1,10 +1,12 @@
 import subprocess
 
+LIBRESSL_PATH = "/opt/homebrew/opt/libressl/bin/openssl"
+
 
 def rsa_encrypt_libressl(input_path, output_path, public_key_path):
     try:
         subprocess.run([
-            "libressl", "rsautl", "-encrypt",
+            LIBRESSL_PATH, "rsautl", "-encrypt",
             "-inkey", public_key_path,
             "-pubin",
             "-in", input_path,
@@ -19,7 +21,7 @@ def rsa_encrypt_libressl(input_path, output_path, public_key_path):
 def rsa_decrypt_libressl(input_path, output_path, private_key_path):
     try:
         subprocess.run([
-            "libressl", "rsautl", "-decrypt",
+            LIBRESSL_PATH, "rsautl", "-decrypt",
             "-inkey", private_key_path,
             "-in", input_path,
             "-out", output_path
@@ -28,9 +30,9 @@ def rsa_decrypt_libressl(input_path, output_path, private_key_path):
     except subprocess.CalledProcessError as e:
         print("Eroare la decriptare RSA:", e)
 
-def generate_rsa_keys_libressl(private_path="private_key.pem", public_path="public_key.pem"):
-    subprocess.run(["libressl", "genrsa", "-out", private_path, "1024"], check=True)
-    subprocess.run(["libressl", "rsa", "-in", private_path, "-pubout", "-out", public_path], check=True)
+def generate_rsa_keys_libressl(private_path="/Users/admin/Desktop/SI-Proiect/private_key.pem", public_path="/Users/admin/Desktop/SI-Proiect/public_key.pem"):
+    subprocess.run([LIBRESSL_PATH, "genrsa", "-out", private_path, "1024"], check=True)
+    subprocess.run([LIBRESSL_PATH, "rsa", "-in", private_path, "-pubout", "-out", public_path], check=True)
 
 
 
@@ -38,7 +40,7 @@ def generate_rsa_keys_libressl(private_path="private_key.pem", public_path="publ
 def aes_encrypt_libressl(input_path, output_path, key):
     try:
         subprocess.run([
-            "libressl", "enc", "-aes-128-cbc", "-salt",
+            LIBRESSL_PATH, "enc", "-aes-128-cbc", "-salt",
             "-in", input_path,
             "-out", output_path,
             "-k", key
@@ -50,7 +52,7 @@ def aes_encrypt_libressl(input_path, output_path, key):
 def aes_decrypt_libressl(input_path, output_path, key):
     try:
         subprocess.run([
-            "libressl", "enc", "-aes-128-cbc", "-d",
+            LIBRESSL_PATH, "enc", "-aes-128-cbc", "-d",
             "-in", input_path,
             "-out", output_path,
             "-k", key
