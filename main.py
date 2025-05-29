@@ -10,6 +10,9 @@ import datetime
 from operatii_crud import *
 from openssl import *
 from libressl import *
+import psutil
+
+
 
 # ------------
 # Initializare fereastra
@@ -53,9 +56,9 @@ def genereaza_chei(session):
     alg = session.query(AlgoritmCriptare).filter_by(nume="RSA").first()
     if alg:
         create_asymmetric_key(cheie_pub, cheie_priv, tip="RSA", id_algoritm=alg.id)
-        messagebox.showinfo("Chei RSA", "Perechea de chei RSA a fost generată și salvată în baza de date.")
+        messagebox.showinfo("Chei RSA", "Perechea de chei RSA a fost generata si salvata in baza de date.")
     else:
-        messagebox.showerror("Eroare", "Algoritmul RSA nu există în baza de date.")
+        messagebox.showerror("Eroare", "Algoritmul RSA nu exista in baza de date.")
     session.close()
 
 
@@ -75,10 +78,10 @@ def select_private_key():
     path = filedialog.askopenfilename(filetypes=[("PEM files", "*.pem")])
     if path:
         rsa_private_key_path.set(path)
-        
+
 def afiseaza_performante():
     win = tk.Toplevel(root)
-    win.title("Performanțe salvate în DB")
+    win.title("Performante salvate in DB")
 
     canvas = tk.Canvas(win)
     scrollbar = tk.Scrollbar(win, orient="vertical", command=canvas.yview)
@@ -97,14 +100,14 @@ def afiseaza_performante():
     canvas.pack(side="left", fill="both", expand=True)
     scrollbar.pack(side="right", fill="y")
 
-    headers = ["Fișier", "Algoritm", "Framework", "Tip operație", "Hash", "Timp (ms)", "Data"]
+    headers = ["Fisier", "Algoritm", "Framework", "Tip operatie", "Hash", "Memorie utilizata (KB)", "Timp (ms)", "Data"]
     for i, h in enumerate(headers):
         tk.Label(scroll_frame, text=h, font=("Arial", 10, "bold"), borderwidth=1, relief="solid", padx=4, pady=2).grid(row=0, column=i)
 
     session = SessionLocal()
     performante = session.query(Performanta).all()
 
-    medii = {}  
+    medii = {}
 
     for idx, p in enumerate(performante, start=1):
         fisier = session.query(Fisier).filter_by(id=p.id_fisier).first()
@@ -123,11 +126,14 @@ def afiseaza_performante():
             nume_fw,
             p.tip_operatie,
             p.rezultat_hash[:16] + "..." if len(p.rezultat_hash) > 16 else p.rezultat_hash,
+            f"{round(p.memorie_utilizata / 1024, 2)} KB" if p.memorie_utilizata else "0 KB",
             f"{p.timp_executie} ms",
             p.data_criptare.strftime("%Y-%m-%d %H:%M:%S")
         ]
+
         for j, val in enumerate(valori):
             tk.Label(scroll_frame, text=val, borderwidth=1, relief="solid", padx=4, pady=2).grid(row=idx, column=j)
+
 
     tk.Label(scroll_frame, text="").grid(row=idx + 1, column=0)
 
@@ -152,7 +158,7 @@ def save():
     global session
 
     if not selected_file:
-        label_fisier.config(text="Selectează un fișier!")
+        label_fisier.config(text="Selecteaza un fisier!")
         return
 
    # session = SessionLocal()
@@ -167,9 +173,9 @@ def save():
                 os.path.getsize(selected_file),
                 os.path.splitext(selected_file)[1][1:]
             )
-            messagebox.showinfo("Succes", "Fișierul a fost salvat în baza de date!")
+            messagebox.showinfo("Succes", "Fisierul a fost salvat in baza de date!")
         else:
-            messagebox.showwarning("Atenție", "Fișierul există deja în baza de date!")
+            messagebox.showwarning("Atentie", "Fisierul exista deja in baza de date!")
 
         alg = session.query(AlgoritmCriptare).filter_by(nume=selected_algoritm.get()).first()
         fw = session.query(Framework).filter_by(nume=selected_framework.get()).first()
@@ -181,6 +187,8 @@ def save():
         
         pub_key = rsa_public_key_path.get()
         priv_key = rsa_private_key_path.get()
+        process = psutil.Process(os.getpid())
+        mem_before = process.memory_info().rss 
 
         t_start = time.time()
 
@@ -230,11 +238,14 @@ def save():
 
         t_end = time.time()
         exec_time_ms = int((t_end - t_start) * 1000)
+        mem_after = process.memory_info().rss
+        memorie_utilizata = mem_after - mem_before
+
 
         if tip_operatie.get() == "criptare":
             with open(selected_file, "rb") as f:
                 rezultat_hash = hashlib.sha256(f.read()).hexdigest()
-            print("Rezultatul criptării:", rezultat_hash)
+            print("Rezultatul criptarii:", rezultat_hash)
             ultima_criptare = rezultat_hash
             print("Ultima criptare:", ultima_criptare)
         else:
@@ -253,7 +264,7 @@ def save():
                 else:
                     messagebox.showwarning("Integritate", "Fisierul decriptat NU coincide")
             else:
-                messagebox.showwarning("Integritate", "Nu s-a găsit un hash de referinta pentru comparatie.")
+                messagebox.showwarning("Integritate", "Nu s-a gasit un hash de referinta pentru comparatie.")
 
         perf = Performanta(
             id_fisier=fisier.id,
@@ -262,14 +273,14 @@ def save():
             tip_operatie=tip_operatie.get(),
             rezultat_hash=rezultat_hash,
             timp_executie=exec_time_ms,
-            memorie_utilizata=0,
+            memorie_utilizata=memorie_utilizata,
             data_criptare=datetime.utcnow()
         )
         session.add(perf)
         session.commit()
 
-        messagebox.showinfo("Succes", "Performanța a fost salvată în baza de date.")
-        print(f"Timp de execuție: {exec_time_ms} ms")
+        messagebox.showinfo("Succes", "Performanya a fost salvata in baza de date.")
+        print(f"Timp de executie: {exec_time_ms} ms")
 
     except Exception as e:
         print("Eroare:", e)
@@ -282,7 +293,7 @@ def save():
 # 1. Selectare fisier
 #-----
 tk.Label(root, text="1. Alege fisier:").pack()
-tk.Button(root, text="Alege fișier", command=select_file).pack()
+tk.Button(root, text="Alege fisier", command=select_file).pack()
 label_fisier = tk.Label(root, text="Niciun fisier selectat")
 label_fisier.pack()
 
@@ -326,12 +337,12 @@ def update_cheie_fields(*args):
         tk.Entry(frame_chei, textvariable=cheie_var).pack()
 
     elif selected_algoritm.get() == "RSA":
-        tk.Label(frame_chei, text="Selectează cheia publică (.pem):").pack()
-        tk.Button(frame_chei, text="Alege fișier", command=select_public_key).pack()
+        tk.Label(frame_chei, text="Selecteaza cheia publica (.pem):").pack()
+        tk.Button(frame_chei, text="Alege fisier", command=select_public_key).pack()
         tk.Label(frame_chei, textvariable=rsa_public_key_path).pack()
 
-        tk.Label(frame_chei, text="Selectează cheia privată (.pem):").pack()
-        tk.Button(frame_chei, text="Alege fișier", command=select_private_key).pack()
+        tk.Label(frame_chei, text="Selecteaza cheia privata (.pem):").pack()
+        tk.Button(frame_chei, text="Alege fisier", command=select_private_key).pack()
         tk.Label(frame_chei, textvariable=rsa_private_key_path).pack()
 
 
@@ -353,7 +364,7 @@ tk.Button(root, text="Start", command=save).pack(pady=10)
 #-----
 # 8. Performanta
 #-----
-tk.Button(root, text="Vezi performanțe", command=afiseaza_performante).pack(pady=5)
+tk.Button(root, text="Vezi performante", command=afiseaza_performante).pack(pady=5)
 
 
 
