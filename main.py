@@ -227,6 +227,7 @@ def save():
         pub_key = rsa_public_key_path.get()
         priv_key = rsa_private_key_path.get()
         process = psutil.Process(os.getpid())
+
         mem_before = process.memory_info().rss 
 
         t_start = time.time()
@@ -275,8 +276,8 @@ def save():
                     output_file = selected_file.replace(".rsa.enc", ".dec")
                     rsa_decrypt_libressl(selected_file, output_file, priv_key)
 
-        t_end = time.time()
-        exec_time_ms = int((t_end - t_start) * 1000)
+        t_end = time.time() 
+        exec_time_ms = int((t_end - t_start) * 1000) / os.path.getsize(selected_file)
         mem_after = process.memory_info().rss
         memorie_utilizata = mem_after - mem_before
 
